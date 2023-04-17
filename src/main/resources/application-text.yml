@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: gasgja
+    url: jdbc:mysql://localhost:3306/gasgja?serverTimezone=GMT%2b8
+    password: "mgvZWQgxsdsa"
+    type: com.alibaba.druid.pool.DruidDataSource
