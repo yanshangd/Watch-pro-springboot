@@ -1,11 +1,13 @@
 package com.yanshang.watchpro.service;
 
 import com.yanshang.watchpro.entity.RoomPojo;
+import com.yanshang.watchpro.utils.Result;
 
 import java.util.List;
 
 public interface RoomService {
-    boolean add(RoomPojo room);
-    boolean findRoom(RoomPojo room);
-    RoomPojo findByRoom(String room);
+    Result add(RoomPojo room);
+    Result findRoom(RoomPojo room);
+    Object findByRoom(String room);
+    Object delRoom(String room);
 }

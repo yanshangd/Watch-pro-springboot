@@ -23,9 +23,9 @@ public class RoomPojo implements Serializable {
     private String name;
     private String url;
 
-    @OneToMany(cascade=CascadeType.ALL,fetch=FetchType.EAGER)
-    @JoinColumn(name = "room",referencedColumnName = "room")
-    private List<UserPojo> users;
+//    @OneToMany(cascade=CascadeType.ALL,fetch=FetchType.EAGER)
+//    @JoinColumn(name = "room",referencedColumnName = "room")
+//    private List<UserPojo> users;
     @Column(name="time",updatable = false,nullable = false)
     @CreatedDate
     private Date time;

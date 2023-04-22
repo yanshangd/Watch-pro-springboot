@@ -3,6 +3,7 @@ package com.yanshang.watchpro.service.impl;
 import com.yanshang.watchpro.dao.RoomDao;
 import com.yanshang.watchpro.entity.RoomPojo;
 import com.yanshang.watchpro.service.RoomService;
+import com.yanshang.watchpro.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,29 +15,44 @@ public class RoomImpl implements RoomService {
     private RoomDao roomDao;
 
     @Override
-    public boolean add(RoomPojo room) {
+    public Result add(RoomPojo room) {
         try {
+            Object is_room = roomDao.findByRoom(room.getRoom());
+            if (is_room!=null){
+                Result result=new Result(200,false,"房间号已存在");
+                return result;
+            }
             roomDao.save(room);
-            return true;
+            Result result=new Result(200 ,true,"创建成功");
+            return result;
         } catch (Exception e) {
             // e.printStackTrace();
-            return false;
+            Result result=new Result(200,false, "错误");
+            return result;
         }
     }
 
     @Override
-    public boolean findRoom(RoomPojo room) {
+    public Result findRoom(RoomPojo room) {
         RoomPojo data = roomDao.findByRoomAndPassword(room.getRoom(), room.getPassword());
         if (data==null){
-            return false;
+            Result result=new Result(200,false, "房间号或密码错误");
+            return result;
         }
-            return true;
+        Result result=new Result(200,true , "加入成功");
+        return result;
 
     }
 
     @Override
-    public RoomPojo findByRoom(String room) {
-        RoomPojo data = roomDao.findByRoom(room);
+    public Object findByRoom(String room) {
+        Object data = roomDao.findByRoom(room);
+        return data;
+    }
+
+    @Override
+    public Object delRoom(String room) {
+        Object data = roomDao.deleteByRoom(room);
         return data;
     }
 }

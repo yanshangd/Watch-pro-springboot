@@ -1,9 +1,15 @@
 package com.yanshang.watchpro.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 public class Result {
     private Object data;
     private Integer code;
     private String type;
+
+    public static Map<String, Set<String>> userByRoom = new HashMap<>();
 
     public Result(Integer code, Object data) {
         this.data = data;
