@@ -14,6 +14,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,7 +44,7 @@ public class WebSocket {
 
     //注入bean
     private UserService userService = MyApplicationContextUtil.getBean(com.yanshang.watchpro.service.UserService.class);
-//    private RoomService roomService = MyApplicationContextUtil.getBean(com.yanshang.watchpro.service.RoomService.class);
+    private RoomService roomService = MyApplicationContextUtil.getBean(com.yanshang.watchpro.service.RoomService.class);
     private MsgService msgService = MyApplicationContextUtil.getBean(com.yanshang.watchpro.service.MsgService.class);
 //    private Result result = MyApplicationContextUtil.getBean(com.yanshang.watchpro.utils.Result.class);
 
@@ -60,9 +61,12 @@ public class WebSocket {
         this.session = session;
         this.roomId = roomId;
         webSocket.put(name, this);
-
+        //群发房间里用户
         Object data = userService.add(roomId, name);
-        groupSending(JSONObject.toJSONString(data),session);
+        String datas = JSONObject.toJSONString(data);
+        groupSending(datas,session);
+        //指定发
+        appointSending("currentTime",datas);
         System.out.println("【连接成功】当前连接人数为：" + webSocket.size() + "，此人为：" + name);
     }
 
@@ -118,28 +122,26 @@ public class WebSocket {
             }
         }else{
             //为视频video
+            if(code==2004){
+                roomService.updateUrlByRoom(data,roomId);
+            }else if (code==2006){
+                NameSending(data);
+                return;
+            }
         }
 //        System.out.println("【接收成功】内容为：" + message);
-        //此处可以指定发送，或者群发，或者xxxx的
         groupSending(message, session);
     }
 
     //群发
     public void groupSending(String message, Session exIncludeSession) {
         Map<String, Set<String>> map = Result.userByRoom;
-//        RoomPojo data = roomService.findByRoom(roomId);
-//        Object[] users = data.getUsers().toArray();
-
-        for (Object name : map.get(roomId)) {
-//            System.out.print(name.toString().equals(this.name));
-//            if(name.toString().equals(this.name)) { }
-//            else {
-            Session user = webSocket.get("" + name + "").session;
+        for (String name : map.get(roomId)) {
+            Session user = webSocket.get(name).session;
             synchronized(user){
                 if(user.isOpen()){
                 try {
                     user.getBasicRemote().sendText(message);
-//                    webSocket.get("" + name + "").session.getBasicRemote().sendText(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -147,10 +149,32 @@ public class WebSocket {
         }
     }
 
-    //指定发
+    //随机发
     public void appointSending(String name, String message) {
+        Map<String, Set<String>> map = Result.userByRoom;
         try {
-            webSocket.get(name).session.getBasicRemote().sendText( message);
+                for (String s : map.get(roomId)) {
+                    if (s != this.name) {
+                        Result result = new Result(2005, this.name, "video");
+                        webSocket.get(s).session.getBasicRemote().sendText(JSONObject.toJSONString(result));
+                        return;
+                    }
+                }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    //指定发视频时间
+    public void NameSending(String message) {
+        JSONObject obj = JSONObject.parseObject(message);
+        String FromName = obj.getString("name");
+        String CurrentTime = obj.getString("msg");
+        Map<String, String> reMsg = new HashMap<>();
+        reMsg.put("msg",CurrentTime);
+        System.out.print(message);
+        try {
+                    Result result = new Result(2006, reMsg, "video");
+                    webSocket.get(FromName).session.getBasicRemote().sendText(JSONObject.toJSONString(result));
         } catch (IOException e) {
             e.printStackTrace();
         }
