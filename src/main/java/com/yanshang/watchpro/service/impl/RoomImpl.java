@@ -55,4 +55,9 @@ public class RoomImpl implements RoomService {
         Object data = roomDao.deleteByRoom(room);
         return data;
     }
+
+    @Override
+    public void updateUrlByRoom(String url, String room) {
+        roomDao.updateUrlByRoom(url,room);
+    }
 }

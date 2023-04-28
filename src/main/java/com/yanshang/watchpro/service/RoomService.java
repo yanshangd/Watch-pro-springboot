@@ -10,4 +10,5 @@ public interface RoomService {
     Result findRoom(RoomPojo room);
     Object findByRoom(String room);
     Object delRoom(String room);
+    void updateUrlByRoom(String url,String room);
 }

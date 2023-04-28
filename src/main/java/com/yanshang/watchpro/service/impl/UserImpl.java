@@ -44,6 +44,7 @@ public class UserImpl implements UserService {
 //                reMsg.put("admin","admin");
 //            }
             reMsg.put("url",room.getUrl());
+            reMsg.put("name",name);
             reMsg.put("msg","" + name + "加入房间");
             Result result=new Result(1002,reMsg , "msg");
             return result;
