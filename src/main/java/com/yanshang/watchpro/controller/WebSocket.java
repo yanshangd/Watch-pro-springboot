@@ -1,11 +1,11 @@
 package com.yanshang.watchpro.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.yanshang.watchpro.entity.RoomPojo;
 import com.yanshang.watchpro.service.MsgService;
 import com.yanshang.watchpro.service.RoomService;
 import com.yanshang.watchpro.service.UserService;
 import com.yanshang.watchpro.utils.MyApplicationContextUtil;
+import com.yanshang.watchpro.utils.Result;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -14,8 +14,8 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Type;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -49,7 +49,6 @@ public class WebSocket {
 //    private Result result = MyApplicationContextUtil.getBean(com.yanshang.watchpro.utils.Result.class);
 
 
-
     /**
      * 建立链接
      *
@@ -59,12 +58,15 @@ public class WebSocket {
     @OnOpen
     public void onOpen(Session session, @PathParam(value = "roomId") String roomId, @PathParam(value = "name") String name) {
         this.name = name;
-        //默认客户端，没有重名
         this.session = session;
         this.roomId = roomId;
         webSocket.put(name, this);
+        //群发房间里用户
         Object data = userService.add(roomId, name);
-        groupSending(JSONObject.toJSONString(data),session);
+        String datas = JSONObject.toJSONString(data);
+        groupSending(datas,session);
+        //指定发
+        appointSending("currentTime",datas);
         System.out.println("【连接成功】当前连接人数为：" + webSocket.size() + "，此人为：" + name);
     }
 
@@ -80,7 +82,11 @@ public class WebSocket {
 //            }
 //        }
         webSocket.remove(name);//session删除
-        Object data = userService.del(name);//数据库用户删除
+        Object data = userService.del(roomId,name);//用户删除
+        if (data == "false") {
+            System.out.println("【退出成功】当前连接人数为：" + webSocket.size());
+            return;
+        }
         groupSending(JSONObject.toJSONString(data),session);
         System.out.println("【退出成功】当前连接人数为：" + webSocket.size());
     }
@@ -114,39 +120,65 @@ public class WebSocket {
             if (code==1001){
                 msgService.add(roomId,name,data);
             }
-
         }else{
             //为视频video
+            if(code==2004){
+                JSONObject videoMsg = JSONObject.parseObject(data);
+                String url = videoMsg.getString("msg");
+                roomService.updateUrlByRoom(url,roomId);
+            }else if (code==2006){
+                NameSending(data);
+                return;
+            }
         }
 //        System.out.println("【接收成功】内容为：" + message);
-        //此处可以指定发送，或者群发，或者xxxx的
         groupSending(message, session);
     }
 
     //群发
     public void groupSending(String message, Session exIncludeSession) {
-        RoomPojo data = roomService.findByRoom(roomId);
-        Object[] users = data.getUsers().toArray();
-        for (Object name : users) {
-//            System.out.print(name.toString().equals(this.name));
-//            if(name.toString().equals(this.name)) { }
-//            else {
+        Map<String, Set<String>> map = Result.userByRoom;
+        for (String name : map.get(roomId)) {
+            Session user = webSocket.get(name).session;
+            synchronized(user){
+                if(user.isOpen()){
                 try {
-                    webSocket.get("" + name + "").session.getBasicRemote().sendText(message);
+                    user.getBasicRemote().sendText(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }}
         }
     }
 
-    //指定发
+    //随机发
     public void appointSending(String name, String message) {
+        Map<String, Set<String>> map = Result.userByRoom;
         try {
-            webSocket.get(name).session.getBasicRemote().sendText( message);
+                for (String s : map.get(roomId)) {
+                    if (s != this.name) {
+                        Result result = new Result(2005, this.name, "video");
+                        webSocket.get(s).session.getBasicRemote().sendText(JSONObject.toJSONString(result));
+                        return;
+                    }
+                }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
+    //指定发视频时间
+    public void NameSending(String message) {
+        JSONObject obj = JSONObject.parseObject(message);
+        String FromName = obj.getString("name");
+        String CurrentTime = obj.getString("msg");
+        Map<String, String> reMsg = new HashMap<>();
+        reMsg.put("msg",CurrentTime);
+        System.out.print(message);
+        try {
+                    Result result = new Result(2006, reMsg, "video");
+                    webSocket.get(FromName).session.getBasicRemote().sendText(JSONObject.toJSONString(result));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
