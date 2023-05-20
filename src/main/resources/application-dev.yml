@@ -1,16 +1,6 @@
-<<<<<<< HEAD
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     url: jdbc:mysql://localhost:3306/watch_pro?serverTimezone=GMT%2b8
     password: 123456
-=======
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    url: jdbc:mysql://localhost:3306/watch_pro?serverTimezone=GMT%2b8
-    password: 123456
->>>>>>> 849a8697ec423f3accd259ae7353f77a1982a52c
-    type: com.alibaba.druid.pool.DruidDataSource
