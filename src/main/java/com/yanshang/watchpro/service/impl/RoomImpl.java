@@ -39,6 +39,11 @@ public class RoomImpl implements RoomService {
             Result result=new Result(200,true , "加入成功");
             return result;
         }
+        RoomPojo name = roomDao.findByName(room.getName());
+        if(name!=null){
+            Result result=new Result(200,false, "昵称已存在");
+            return result;
+        }
         RoomPojo data = roomDao.findByRoomAndPassword(room.getRoom(), room.getPassword());
         if (data==null){
             Result result=new Result(200,false, "房间号或密码错误");
