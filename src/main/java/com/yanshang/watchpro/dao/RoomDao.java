@@ -12,6 +12,7 @@ import java.util.List;
 public interface RoomDao extends JpaRepository<RoomPojo,Long> {
     RoomPojo findByRoomAndPassword(String room_id,String password);
     RoomPojo findByRoom(String room_id);
+    RoomPojo findByName(String name);
 
     @Transactional
     Object deleteByRoom(String room);
